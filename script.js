@@ -1,9 +1,11 @@
 let clickCount = 0;
 
 const countryInput = document.getElementById('country');
+const countryCodeInput = document.getElementById('countryCode');
 const myForm = document.getElementById('form');
 const modal = document.getElementById('form-feedback-modal');
 const clicksInfo = document.getElementById('click-count');
+const forms = document.querySelectorAll('.needs-validation')
 
 function handleClick() {
     clickCount++;
@@ -24,12 +26,14 @@ async function fetchAndFillCountries() {
     }
 }
 
+
 function getCountryByIP() {
     fetch('https://get.geojs.io/v1/ip/geo.json')
         .then(response => response.json())
         .then(data => {
             const country = data.country;
-            // TODO inject country to form and call getCountryCode(country) function
+            countryInput.value = country;
+            getCountryCode(country);
         })
         .catch(error => {
             console.error('Błąd pobierania danych z serwera GeoJS:', error);
@@ -48,7 +52,8 @@ function getCountryCode(countryName) {
     })
     .then(data => {        
         const countryCode = data[0].idd.root + data[0].idd.suffixes.join("")
-        // TODO inject countryCode to form
+        countryCodeInput.value = countryCode;
+        getCountryCode(countryCode);
     })
     .catch(error => {
         console.error('Wystąpił błąd:', error);
@@ -56,9 +61,28 @@ function getCountryCode(countryName) {
 }
 
 
+function handleFormSubmit(event) {
+    event.preventDefault(); 
+    modal.show();
+}
+
 (() => {
-    // nasłuchiwania na zdarzenie kliknięcia myszką
     document.addEventListener('click', handleClick);
 
+    myForm.addEventListener('submit', handleFormSubmit);
+
     fetchAndFillCountries();
+    getCountryByIP();
+
+    'use strict'
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+        if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+        }
+
+        form.classList.add('was-validated')
+        }, false)
+    })
 })()
